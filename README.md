@@ -2,6 +2,10 @@
 
 RoverForge is a modular robot project scaffold for the Arduino UNO R4 WiFi + a Raspberry Pi controller. It includes motor control, ultrasonic sensing, and a simple web UI for teleoperation.
 
+Version: 0.1.0
+
+See `releases/` for release notes and `CHANGELOG.md` for history.
+
 This repository is a starter template — expand the `lib/` and `pi_control/` components as you add features.
 
 Quick start
