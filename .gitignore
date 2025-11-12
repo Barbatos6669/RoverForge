@@ -1,0 +1,18 @@
+.vscode/
+*.pyc
+__pycache__/
+*.log
+*.elf
+/build/
+/.pio/
+.DS_Store
+.env
+
+# Arduino specific
+*.hex
+*.bin
+*.eep
+*.elf
+
+# OS
+Thumbs.db

@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>RoverForge RC</title>
+  <style>body{font-family:sans-serif;margin:20px}button{width:90px;height:60px;margin:5px;font-size:18px}#telemetry{margin-top:12px;white-space:pre-wrap;background:#f6f6f6;padding:8px;height:120px;overflow:auto}</style>
+</head>
+<body>
+  <h3>RoverForge RC (web)</h3>
+  <div>
+    <button id="btn-forward">Forward (W)</button><br>
+    <button id="btn-left">Left (A)</button>
+    <button id="btn-stop">Stop (X)</button>
+    <button id="btn-right">Right (D)</button><br>
+    <button id="btn-back">Back (S)</button>
+    <button id="btn-plus">Speed +</button>
+    <button id="btn-minus">Speed -</button>
+  </div>
+
+  <div id="telemetry">Telemetry will appear here...</div>
+
+<script>
+const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+const telemetry = document.getElementById('telemetry');
+ws.onmessage = (ev) => { telemetry.textContent = ev.data + "\n" + telemetry.textContent; };
+function send(cmd) { if (ws.readyState === 1) ws.send(cmd); }
+function makeHold(button, cmd) {
+  let iv = null;
+  button.addEventListener('mousedown', () => { send(cmd); iv = setInterval(()=>send(cmd), 80); });
+  window.addEventListener('mouseup', () => { if (iv) { clearInterval(iv); iv = null; send('x'); } });
+  button.addEventListener('touchstart', (e)=>{ e.preventDefault(); send(cmd); iv = setInterval(()=>send(cmd), 80); });
+  button.addEventListener('touchend', ()=>{ if (iv){ clearInterval(iv); iv=null; send('x'); } });
+}
+makeHold(document.getElementById('btn-forward'), 'w');
+makeHold(document.getElementById('btn-left'), 'a');
+makeHold(document.getElementById('btn-right'), 'd');
+makeHold(document.getElementById('btn-back'), 's');
+document.getElementById('btn-stop').addEventListener('click', ()=>send('x'));
+document.getElementById('btn-plus').addEventListener('click', ()=>send('+'));
+document.getElementById('btn-minus').addEventListener('click', ()=>send('-'));
+const keyMap = { 'w':'w','a':'a','s':'s','d':'d' };
+let held = {};
+window.addEventListener('keydown', (e)=>{ const k = e.key.toLowerCase(); if (keyMap[k] && !held[k]) { held[k]=true; send(keyMap[k]); } if (k === '+') send('+'); if (k === '-') send('-'); if (k === 'x') send('x'); });
+window.addEventListener('keyup', (e)=>{ const k=e.key.toLowerCase(); if (keyMap[k]) { held[k]=false; send('x'); } });
+</script>
+</body>
+</html>
