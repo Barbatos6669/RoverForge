@@ -176,6 +176,9 @@ void setMotorSpeeds(int left, int right) {
     rightWheelFront(STOP, 0);
     rightWheelBack(STOP, 0);
   }
+  // Debug telemetry: report current commanded speeds
+  Serial.print("SET L:"); Serial.print(left);
+  Serial.print(" R:"); Serial.println(right);
 }
 
 // Serial command handler (single-byte commands)
@@ -243,42 +246,42 @@ void leftWheelFront(MotorState state, int speed) {
 }
 
 void rightWheelFront(MotorState state, int speed) {
+  // Map right front to the right motor primary pins (ENA_RM / IN1_RM, IN2_RM)
   if (state == FORWARD) {
-    // Set right front wheel to move forward at given speed
-    analogWrite(ENB_RM, speed);
-    digitalWrite(IN3_RM, HIGH);
-    digitalWrite(IN4_RM, LOW);
+    analogWrite(ENA_RM, speed);
+    digitalWrite(IN1_RM, HIGH);
+    digitalWrite(IN2_RM, LOW);
   } else if (state == BACKWARD) {
-    analogWrite(ENB_RM, speed);
-    digitalWrite(IN3_RM, LOW);
-    digitalWrite(IN4_RM, HIGH);
+    analogWrite(ENA_RM, speed);
+    digitalWrite(IN1_RM, LOW);
+    digitalWrite(IN2_RM, HIGH);
   } else {
-    analogWrite(ENB_RM, 0);
-    digitalWrite(IN3_RM, LOW);
-    digitalWrite(IN4_RM, LOW);
+    analogWrite(ENA_RM, 0);
+    digitalWrite(IN1_RM, LOW);
+    digitalWrite(IN2_RM, LOW);
   }
 }
 
 void leftWheelBack(MotorState state, int speed) {
+  // Left back mirrors left primary pins (use ENA_LM / IN1_LM, IN2_LM)
   if (state == FORWARD) {
-    // Set left back wheel to move forward at given speed
-    analogWrite(ENB_LM, speed);
-    digitalWrite(IN3_LM, HIGH);
-    digitalWrite(IN4_LM, LOW);
+    analogWrite(ENA_LM, speed);
+    digitalWrite(IN1_LM, HIGH);
+    digitalWrite(IN2_LM, LOW);
   } else if (state == BACKWARD) {
-    analogWrite(ENB_LM, speed);
-    digitalWrite(IN3_LM, LOW);
-    digitalWrite(IN4_LM, HIGH);
+    analogWrite(ENA_LM, speed);
+    digitalWrite(IN1_LM, LOW);
+    digitalWrite(IN2_LM, HIGH);
   } else {
-    analogWrite(ENB_LM, 0);
-    digitalWrite(IN3_LM, LOW);
-    digitalWrite(IN4_LM, LOW);
+    analogWrite(ENA_LM, 0);
+    digitalWrite(IN1_LM, LOW);
+    digitalWrite(IN2_LM, LOW);
   }
 }
 
 void rightWheelBack(MotorState state, int speed) {
+  // Right back mirrors right primary pins (use ENA_RM / IN1_RM, IN2_RM)
   if (state == FORWARD) {
-    // Set right back wheel to move forward at given speed
     analogWrite(ENA_RM, speed);
     digitalWrite(IN1_RM, HIGH);
     digitalWrite(IN2_RM, LOW);
