@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Simple aiohttp + pyserial server to forward websocket commands to Arduino."""
+"""WebSocket server for RoverForge - bridges browser UI to Arduino serial."""
 import asyncio
+import json
 from aiohttp import web, WSMsgType
 import serial
 import os
@@ -39,6 +40,29 @@ async def websocket_handler(request):
         clients.discard(ws)
     return ws
 
+def parse_telemetry_line(line):
+    """Parse telemetry lines into structured JSON.
+    
+    Supports formats:
+    - CSV: "T,L:200,R:200,D:25,B:12.3"
+    - Returns: {"type": "telemetry", "data": {"L": 200, "R": 200, "D": 25, "B": 12.3}}
+    """
+    if not line.startswith("T,"):
+        return None
+    
+    data = {}
+    parts = line[2:].split(",")
+    for part in parts:
+        if ":" in part:
+            key, val = part.split(":", 1)
+            try:
+                # Try int first, then float
+                data[key] = int(val) if "." not in val else float(val)
+            except ValueError:
+                data[key] = val  # fallback to string
+    
+    return {"type": "telemetry", "data": data} if data else None
+
 async def serial_reader():
     loop = asyncio.get_running_loop()
     while True:
@@ -46,9 +70,19 @@ async def serial_reader():
             line = await asyncio.to_thread(ser.readline)
             if line:
                 text = line.decode(errors="replace").strip()
+                
+                # Try parsing structured telemetry
+                parsed = parse_telemetry_line(text)
+                if parsed:
+                    import json
+                    message = json.dumps(parsed)
+                else:
+                    # Send raw text for non-telemetry lines
+                    message = text
+                
                 for ws in list(clients):
                     try:
-                        await ws.send_str(text)
+                        await ws.send_str(message)
                     except Exception:
                         clients.discard(ws)
         except Exception:

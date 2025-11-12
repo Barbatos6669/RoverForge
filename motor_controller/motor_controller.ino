@@ -1,7 +1,9 @@
 /*
-  Simple Distance Sensor Sketch (HC-SR04 Ultrasonic)
-  Measures distance and prints to Serial Monitor.
+  RoverForge Motor Controller
+  Main sketch: motor control + ultrasonic sensing + serial telemetry
 */
+
+#include "../lib/motor_driver.h"
 
 const int trigPin = A0;
 const int echoPin = A1;
@@ -43,22 +45,13 @@ void distanceSensor();
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("RoverForge Motor Controller v0.1.0");
+  
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
-  pinMode(ENA_LM, OUTPUT);
-  pinMode(IN1_LM, OUTPUT);
-  pinMode(IN2_LM, OUTPUT);
-  pinMode(IN3_LM, OUTPUT);
-  pinMode(IN4_LM, OUTPUT);
-  pinMode(ENB_LM, OUTPUT);  
-
-  pinMode(ENA_RM, OUTPUT);
-  pinMode(IN1_RM, OUTPUT);
-  pinMode(IN2_RM, OUTPUT);
-  pinMode(IN3_RM, OUTPUT);
-  pinMode(IN4_RM, OUTPUT);
-  pinMode(ENB_RM, OUTPUT);
+  // Initialize motor driver
+  motorBegin(ENA_LM, IN1_LM, IN2_LM, ENB_LM, ENA_RM, IN1_RM, IN2_RM, ENB_RM);
 }
 
 void loop() {
@@ -104,27 +97,38 @@ void distanceSensor() {
   }
 }
 
+// High-level movement functions using motor_driver API
+const int DEFAULT_SPEED = 200;
+
+void moveForward() {
+  setMotorSpeeds(DEFAULT_SPEED, DEFAULT_SPEED);
+}
+
+void moveBackward() {
+  setMotorSpeeds(-DEFAULT_SPEED, -DEFAULT_SPEED);
+}
+
+void turnLeft() {
+  setMotorSpeeds(-DEFAULT_SPEED, DEFAULT_SPEED);
+}
+
+void turnRight() {
+  setMotorSpeeds(DEFAULT_SPEED, -DEFAULT_SPEED);
+}
+
+// Legacy wheel helpers (kept for compatibility)
 void leftWheelFront() {
-  // Left motor forward: IN1 = HIGH, IN2 = LOW, enable PWM on ENA_LM
-  digitalWrite(IN1_LM, HIGH);
-  digitalWrite(IN2_LM, LOW);
-  analogWrite(ENA_LM, 200); // PWM (0-255) — tune as needed
+  setMotorSpeeds(DEFAULT_SPEED, 0);
 }
+
 void rightWheelFront() {
-  // Right motor forward: IN1 = HIGH, IN2 = LOW, enable PWM on ENA_RM
-  digitalWrite(IN1_RM, HIGH);
-  digitalWrite(IN2_RM, LOW);
-  analogWrite(ENA_RM, 200);
+  setMotorSpeeds(0, DEFAULT_SPEED);
 }
+
 void leftWheelBack() {
-  // Left motor reverse: IN1 = LOW, IN2 = HIGH
-  digitalWrite(IN1_LM, LOW);
-  digitalWrite(IN2_LM, HIGH);
-  analogWrite(ENA_LM, 200);
+  setMotorSpeeds(-DEFAULT_SPEED, 0);
 }
+
 void rightWheelBack() {
-  // Right motor reverse: IN1 = LOW, IN2 = HIGH
-  digitalWrite(IN1_RM, LOW);
-  digitalWrite(IN2_RM, HIGH);
-  analogWrite(ENA_RM, 200);
+  setMotorSpeeds(0, -DEFAULT_SPEED);
 }

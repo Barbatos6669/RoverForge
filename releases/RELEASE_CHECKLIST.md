@@ -3,6 +3,8 @@
 Use this template when preparing a release:
 
 - [ ] Update `VERSION` file
+- [ ] Create New Release Note for release
+- [ ] Update Documentation
 - [ ] Update `CHANGELOG.md` with release notes
 - [ ] Tag the git commit: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
 - [ ] Push tags: `git push --tags`
