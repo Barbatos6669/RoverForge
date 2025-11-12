@@ -3,7 +3,9 @@
   Main sketch: motor control + ultrasonic sensing + serial telemetry
 */
 
-#include "../lib/motor_driver.h"
+#include <Arduino.h>
+// motor_driver library removed per user request.
+// Implement your own motor helper functions below (setMotorSpeeds, stopMotors, etc.).
 
 const int trigPin = A0;
 const int echoPin = A1;
@@ -56,6 +58,7 @@ void setup() {
 
 void loop() {
   distanceSensor();
+  moveForward();
   delay(500); // wait half a second between measurements
 }
 
