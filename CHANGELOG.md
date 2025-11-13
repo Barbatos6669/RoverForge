@@ -5,17 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
-- Refactored motor control into `motor_driver` library with clean API (`motorBegin`, `setMotorSpeeds`, `stopMotors`)
-- Simplified main sketch `setup()` from 12 pinMode calls to single `motorBegin()` call
-- Added high-level movement functions (`moveForward`, `moveBackward`, `turnLeft`, `turnRight`)
-- Restructured examples with per-sketch folders and unified Makefile
-- Enhanced server telemetry parsing with structured JSON output for `T,*` format lines
-- Updated README.md with production-ready messaging and detailed quickstart
+- Removed unused `motor_driver` library and all references
+- Removed all server and web UI code (pi_control, static, and related docs)
+- Simplified project structure and documentation for easier learning and extension
 
 ### Added
-- `lib/motor_driver.h` and `lib/motor_driver.cpp` - Motor control abstraction with MIN_SPEED enforcement
-- `examples/Makefile` - Unified build system for all example sketches
-- Telemetry parsing function in `server.py` for structured data streaming
+- None (cleanup release)
 
 ## [0.1.0] - 2025-11-12
 ### Added

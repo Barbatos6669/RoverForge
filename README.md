@@ -50,42 +50,22 @@ make list                             # Show all available examples
 
 ### Raspberry Pi Server
 
-**Developer Mode (tmux):**
-```bash
-bash tools/tmux/start_server.sh
-tmux attach -t roverforge
-```
-
-**Production Mode (systemd):**
-```bash
-sudo bash tools/sysd-service/install_service.sh
-sudo systemctl enable roverforge.service
-sudo systemctl start roverforge.service
-systemctl status roverforge.service
-```
-
-Open browser to `http://<pi-ip>:8080` and control your rover with keyboard (WASD) or on-screen buttons!
+Note: The previous Pi webserver and deployment helper scripts were removed to simplify the project. Pi-based features and a lightweight server can be added later as optional components — see `README_ROADMAP.md` for planned extensions.
 
 ## Repository Structure
 
 ```
-motor_controller/       # Main Arduino firmware with motor_driver library integration
-lib/                    # Hardware abstraction libraries (motor_driver, future sensor libs)
-pi_control/             # WebSocket server and browser-based UI
+motor_controller/       # Main Arduino firmware
+lib/                    # Hardware abstraction libraries (future sensor libs)
 examples/               # Standalone test sketches (motor_test, ultrasonic_test)
 docs/                   # Architecture, wiring guides, and startup documentation
-tools/                  # Deployment scripts (systemd service, tmux workflows)
 releases/               # Release notes and version artifacts
 .github/                # Issue templates, PR templates, CI workflows
 ```
 
 ## Architecture
 
-RoverForge uses a three-layer design:
-
-1. **Low-level (Arduino)**: Real-time motor control, sensor sampling, safety watchdog, minimal serial protocol
-2. **Mid-level (Raspberry Pi)**: WebSocket server, camera processing, higher-level behaviors, telemetry aggregation
-3. **High-level (Browser)**: Web UI for teleop, telemetry visualization, mission planning
+RoverForge is designed to be modular and simple. The current focus is on the Arduino firmware for motor and sensor control. Higher-level features (like web UI or Pi integration) can be added later as you learn and grow the project.
 
 See `docs/ARCHITECTURE.md` for detailed design decisions.
 
@@ -105,12 +85,7 @@ See `docs/ARCHITECTURE.md` for detailed design decisions.
 
 ### Adding New Features
 
-**Motor Control:**
-```cpp
-#include "../lib/motor_driver.h"
-motorBegin(enaL, in1L, in2L, enbL, enaR, in1R, in2R, enbR);
-setMotorSpeeds(200, 200);  // Forward at speed 200
-```
+
 
 **Sensor Integration:**
 ```cpp
@@ -127,7 +102,6 @@ ws.send('s');  // Stop
 ```bash
 # Run CI checks locally
 cd motor_controller && make compile
-cd ../pi_control && python -m pylint server.py
 
 # Hardware smoke tests
 cd examples

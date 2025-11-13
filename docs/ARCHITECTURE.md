@@ -4,7 +4,11 @@ This document summarizes the recommended architecture for RoverForge.
 
 Layers
 
+
+Current focus:
 - Arduino (real-time): motor control, sensors, safety watchdog, minimal command protocol.
+
+Extensions (future):
 - Raspberry Pi (optional): camera processing, high-level behaviors, web UI server, logging.
 - Remote UI: browser-based teleop and telemetry display.
 
@@ -17,8 +21,7 @@ Key decisions
 Files
 
 - `motor_controller/` contains the Arduino sketch and Makefile.
-- `pi_control/` contains the Python server and static web UI.
-- `lib/` is for Arduino helper modules (motor_driver, sensors).
+- `lib/` is for Arduino helper modules (future sensors).
 
 Extensions
 

@@ -36,27 +36,21 @@ enum MotorState {
 
 enum MotorState motorState = STOP; // Initial state
 
+
+// Macanum wheel motor control functions
 void leftWheelFront(MotorState state, int speed);
 void rightWheelFront(MotorState state, int speed);
 void leftWheelBack(MotorState state, int speed);
 void rightWheelBack(MotorState state, int speed);
 
-void stopMotors();
-void forward();
-void backward();
-void left();
-void right();
-
-// --- Teleop / runtime settings ---
-int DEFAULT_SPEED = 120;            // starting speed magnitude (0-255)
-const int MIN_SPEED = 80;           // minimum useful PWM to overcome stall
-unsigned long lastCmdTs = 0;
-const unsigned long CMD_TIMEOUT_MS = 600; // auto-stop if no command
-unsigned long lastUltraTs = 0;
-const unsigned long ULTRA_CHECK_MS = 150;
-
-void handleSerialChar(char c);
-void setMotorSpeeds(int left, int right);
+void stopMotors(int speed = 0);
+void forward(int speed = 200);
+void backward(int speed = 200);
+void rotateLeft(int speed = 200);
+void rotateRight(int speed = 200);
+void strafeLeft(int speed = 200);
+void strafeRight(int speed = 200);
+void testForward();
 
 // Reads the HC-SR04 and returns distance in cm, or -1 on timeout/no-echo.
 long readUltrasonicCm(int trig, int echo, unsigned long timeout = 30000UL);
@@ -85,27 +79,39 @@ void setup() {
 }
 
 void loop() {
-    // Non-blocking main loop: handle serial teleop, periodic ultrasonic, and safety timeout
-    // Read serial single-byte commands (non-blocking)
-    while (Serial.available() > 0) {
-      char c = Serial.read();
-      lastCmdTs = millis();
-      handleSerialChar(c);
+    // Check for serial commands
+    if (Serial.available() > 0) {
+      char cmd = Serial.read();
+      
+      if (cmd == 't' || cmd == 'T') {
+        testForward();
+      } else if (cmd == 'z' || cmd == 'Z') {
+        testWheels();
+      } else if (cmd == 'w' || cmd == 'W') {
+        Serial.println("CMD: forward");
+        forward(70);
+      } else if (cmd == 's' || cmd == 'S') {
+        Serial.println("CMD: stop");
+        stopMotors();
+      } else if (cmd == 'x' || cmd == 'X') {
+        Serial.println("CMD: backward");
+        backward(70);
+      } else if (cmd == 'a' || cmd == 'A') {
+        Serial.println("CMD: left");
+        rotateLeft(70);
+      } else if (cmd == 'd' || cmd == 'D') {
+        Serial.println("CMD: right");
+        rotateRight(70);
+      } else if (cmd == 'q' || cmd == 'Q') {
+        Serial.println("CMD: strafe left");
+        strafeLeft(70);
+      } else if (cmd == 'e' || cmd == 'E') {
+        Serial.println("CMD: strafe right");
+        strafeRight(70);
+      }
     }
 
-    // Periodic ultrasonic checks
-    if (millis() - lastUltraTs >= ULTRA_CHECK_MS) {
-      lastUltraTs = millis();
-      distanceSensor();
-    }
-
-    // Safety: stop if no command received recently
-    if (millis() - lastCmdTs > CMD_TIMEOUT_MS) {
-      stopMotors();
-    }
-
-    // small yield
-    delay(5);
+    delay(500); // wait half a second between measurements
 }
 
 // Implementation: triggers the HC-SR04, measures echo pulse width (microseconds)
@@ -148,86 +154,6 @@ void distanceSensor() {
 
 // Implement motor control functions here (setMotorSpeeds, stopMotors, etc.)
 
-// Simple wrapper: set signed speeds for left/right (-255..255)
-void setMotorSpeeds(int left, int right) {
-  int l = abs(left);
-  int r = abs(right);
-  if (l > 0 && l < MIN_SPEED) l = MIN_SPEED;
-  if (r > 0 && r < MIN_SPEED) r = MIN_SPEED;
-
-  if (left > 0) {
-    leftWheelFront(FORWARD, l);
-    leftWheelBack(FORWARD, l);
-  } else if (left < 0) {
-    leftWheelFront(BACKWARD, l);
-    leftWheelBack(BACKWARD, l);
-  } else {
-    leftWheelFront(STOP, 0);
-    leftWheelBack(STOP, 0);
-  }
-
-  if (right > 0) {
-    rightWheelFront(FORWARD, r);
-    rightWheelBack(FORWARD, r);
-  } else if (right < 0) {
-    rightWheelFront(BACKWARD, r);
-    rightWheelBack(BACKWARD, r);
-  } else {
-    rightWheelFront(STOP, 0);
-    rightWheelBack(STOP, 0);
-  }
-  // Debug telemetry: report current commanded speeds
-  Serial.print("SET L:"); Serial.print(left);
-  Serial.print(" R:"); Serial.println(right);
-}
-
-// Serial command handler (single-byte commands)
-void handleSerialChar(char c) {
-  switch (c) {
-    case 'w': // forward
-    case 'W':
-      setMotorSpeeds(DEFAULT_SPEED, DEFAULT_SPEED);
-      Serial.println("CMD: forward");
-      break;
-    case 's': // stop
-    case 'S':
-      stopMotors();
-      Serial.println("CMD: stop");
-      break;
-    case 'x': // backward
-    case 'X':
-      setMotorSpeeds(-DEFAULT_SPEED, -DEFAULT_SPEED);
-      Serial.println("CMD: backward");
-      break;
-    case 'a': // left
-    case 'A':
-      setMotorSpeeds(-DEFAULT_SPEED, DEFAULT_SPEED);
-      Serial.println("CMD: left");
-      break;
-    case 'd': // right
-    case 'D':
-      setMotorSpeeds(DEFAULT_SPEED, -DEFAULT_SPEED);
-      Serial.println("CMD: right");
-      break;
-    case '+':
-      DEFAULT_SPEED = min(DEFAULT_SPEED + 20, 255);
-      Serial.print("Speed: "); Serial.println(DEFAULT_SPEED);
-      break;
-    case '-':
-      DEFAULT_SPEED = max(DEFAULT_SPEED - 20, MIN_SPEED);
-      Serial.print("Speed: "); Serial.println(DEFAULT_SPEED);
-      break;
-    case 'e':
-    case 'E':
-      stopMotors();
-      Serial.println("CMD: E-STOP");
-      break;
-    default:
-      // ignore unknown bytes (like newline)
-      break;
-  }
-}
-
 void leftWheelFront(MotorState state, int speed) {
   if (state == FORWARD) {
     // Set left front wheel to move forward at given speed
@@ -246,42 +172,42 @@ void leftWheelFront(MotorState state, int speed) {
 }
 
 void rightWheelFront(MotorState state, int speed) {
-  // Map right front to the right motor primary pins (ENA_RM / IN1_RM, IN2_RM)
   if (state == FORWARD) {
-    analogWrite(ENA_RM, speed);
-    digitalWrite(IN1_RM, HIGH);
-    digitalWrite(IN2_RM, LOW);
+    // Set right front wheel to move forward at given speed
+    analogWrite(ENB_RM, speed);
+    digitalWrite(IN3_RM, HIGH);
+    digitalWrite(IN4_RM, LOW);
   } else if (state == BACKWARD) {
-    analogWrite(ENA_RM, speed);
-    digitalWrite(IN1_RM, LOW);
-    digitalWrite(IN2_RM, HIGH);
+    analogWrite(ENB_RM, speed);
+    digitalWrite(IN3_RM, LOW);
+    digitalWrite(IN4_RM, HIGH);
   } else {
-    analogWrite(ENA_RM, 0);
-    digitalWrite(IN1_RM, LOW);
-    digitalWrite(IN2_RM, LOW);
+    analogWrite(ENB_RM, 0);
+    digitalWrite(IN3_RM, LOW);
+    digitalWrite(IN4_RM, LOW);
   }
 }
 
 void leftWheelBack(MotorState state, int speed) {
-  // Left back mirrors left primary pins (use ENA_LM / IN1_LM, IN2_LM)
   if (state == FORWARD) {
-    analogWrite(ENA_LM, speed);
-    digitalWrite(IN1_LM, HIGH);
-    digitalWrite(IN2_LM, LOW);
+    // Set left back wheel to move forward at given speed
+    analogWrite(ENB_LM, speed);
+    digitalWrite(IN3_LM, HIGH);
+    digitalWrite(IN4_LM, LOW);
   } else if (state == BACKWARD) {
-    analogWrite(ENA_LM, speed);
-    digitalWrite(IN1_LM, LOW);
-    digitalWrite(IN2_LM, HIGH);
+    analogWrite(ENB_LM, speed);
+    digitalWrite(IN3_LM, LOW);
+    digitalWrite(IN4_LM, HIGH);
   } else {
-    analogWrite(ENA_LM, 0);
-    digitalWrite(IN1_LM, LOW);
-    digitalWrite(IN2_LM, LOW);
+    analogWrite(ENB_LM, 0);
+    digitalWrite(IN3_LM, LOW);
+    digitalWrite(IN4_LM, LOW);
   }
 }
 
 void rightWheelBack(MotorState state, int speed) {
-  // Right back mirrors right primary pins (use ENA_RM / IN1_RM, IN2_RM)
   if (state == FORWARD) {
+    // Set right back wheel to move forward at given speed
     analogWrite(ENA_RM, speed);
     digitalWrite(IN1_RM, HIGH);
     digitalWrite(IN2_RM, LOW);
@@ -296,37 +222,91 @@ void rightWheelBack(MotorState state, int speed) {
   }
 }
 
-void stopMotors() {
-  leftWheelFront(STOP, 0);
-  rightWheelFront(STOP, 0);
-  leftWheelBack(STOP, 0);
-  rightWheelBack(STOP, 0);
+void stopMotors(int speed) {
+  leftWheelFront(STOP, speed);
+  rightWheelFront(STOP, speed);
+  leftWheelBack(STOP, speed);
+  rightWheelBack(STOP, speed);
 }
 
-void forward() {
-  leftWheelFront(FORWARD, 60);
-  rightWheelFront(FORWARD, 60);
-  leftWheelBack(FORWARD, 60);
-  rightWheelBack(FORWARD, 60);
+void forward(int speed) {
+  leftWheelFront(FORWARD, speed);
+  rightWheelFront(FORWARD, speed);
+  leftWheelBack(FORWARD, speed);
+  rightWheelBack(FORWARD, speed);
 }
 
-void backward() {
-  leftWheelFront(BACKWARD, 60);
-  rightWheelFront(BACKWARD, 60);
-  leftWheelBack(BACKWARD, 60);
-  rightWheelBack(BACKWARD, 60);
+void backward(int speed) {
+  leftWheelFront(BACKWARD, speed);
+  rightWheelFront(BACKWARD, speed);
+  leftWheelBack(BACKWARD, speed);
+  rightWheelBack(BACKWARD, speed);
 }
 
-void left() {
-  leftWheelFront(BACKWARD, 60);
-  rightWheelFront(FORWARD, 60);
-  leftWheelBack(BACKWARD, 60);
-  rightWheelBack(FORWARD, 60);
+void rotateLeft(int speed) {
+  leftWheelFront(BACKWARD, speed);
+  rightWheelFront(FORWARD, speed);
+  leftWheelBack(BACKWARD, speed);
+  rightWheelBack(FORWARD, speed);
 }
 
-void right() {
-  leftWheelFront(FORWARD, 60);
-  rightWheelFront(BACKWARD, 60);
-  leftWheelBack(FORWARD, 60);
-  rightWheelBack(BACKWARD, 60);
+void rotateRight(int speed) {
+  leftWheelFront(FORWARD, speed);
+  rightWheelFront(BACKWARD, speed);
+  leftWheelBack(FORWARD, speed);
+  rightWheelBack(BACKWARD, speed);
+}
+
+void strafeLeft(int speed) {
+  leftWheelFront(BACKWARD, speed);
+  rightWheelFront(FORWARD, speed);
+  leftWheelBack(FORWARD, speed);
+  rightWheelBack(BACKWARD, speed);
+}
+
+void strafeRight(int speed) {
+  leftWheelFront(FORWARD, speed);
+  rightWheelFront(BACKWARD, speed);
+  leftWheelBack(BACKWARD, speed);
+  rightWheelBack(FORWARD, speed);
+}
+
+// Test function: move forward for 2 seconds then stop
+void testForward() {
+  Serial.println("Test: Moving forward for 2 seconds");
+  forward(120);
+  delay(2000);
+  stopMotors();
+  Serial.println("Test: Done");
+}
+
+// Test individual wheels to verify wiring
+void testWheels() {
+  Serial.println("Testing individual wheels...");
+  
+  Serial.println("Left Front - Forward");
+  leftWheelFront(FORWARD, 150);
+  delay(1000);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Right Front - Forward");
+  rightWheelFront(FORWARD, 150);
+  delay(1000);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Left Back - Forward");
+  leftWheelBack(FORWARD, 150);
+  delay(1000);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Right Back - Forward");
+  rightWheelBack(FORWARD, 150);
+  delay(1000);
+  stopMotors();
+  delay(500);
+  
+  Serial.println("Test complete!");
 }
